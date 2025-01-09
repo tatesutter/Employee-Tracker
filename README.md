@@ -127,5 +127,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 ### Questions?
-For any questions or feedback, feel free to contact the project maintainer.
+For any questions or feedback, feel free to contact me at [tatesutter04@gmail.com](mailto:tatesutter04@gmail.com)
 
