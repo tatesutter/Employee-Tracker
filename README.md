@@ -116,6 +116,8 @@ The database contains three tables:
 
 A walkthrough video demonstrating the application's functionality is available [here](/assets/employee-example-video.mp4).
 
+([Use if first link doesn't work](https://www.youtube.com/watch?v=Ubl1IzC-32k))
+
 ---
 
 ## License
