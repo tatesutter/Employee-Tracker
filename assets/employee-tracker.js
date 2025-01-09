@@ -34,6 +34,11 @@ const mainMenu = async () => {
                 'Add a role',
                 'Add an employee',
                 'Update an employee role',
+                'Update Employee Manager',
+                'View Employees by Manager',
+                'View Employees by Department',
+                'Delete Department, Role, or Employee',
+                'View Total Utilized Budget by Department',
                 'Exit'
             ]
         }
@@ -60,6 +65,21 @@ const mainMenu = async () => {
             break;
         case 'Update an employee role':
             await updateEmployeeRole();
+            break;
+        case 'Update Employee Manager':
+            await updateEmployeeManager();
+            break;
+        case 'View Employees by Manager':
+            await viewEmployeesByManager();
+            break;
+        case 'View Employees by Department':
+            await viewEmployeesByDepartment();
+            break;
+        case 'Delete Department, Role, or Employee':
+             await deleteRecord();
+            break;
+        case 'View Total Utilized Budget by Department':
+            await viewDepartmentBudget();
             break;
         case 'Exit':
             client.end();
@@ -175,6 +195,163 @@ const updateEmployeeRole = async () => {
 
     await client.query('UPDATE employee SET role_id = $1 WHERE id = $2', [role_id, employee_id]);
     console.log('Employee role updated successfully.');
+};
+
+// Update employee manager
+const updateEmployeeManager = async () => {
+    const employees = await client.query('SELECT id, first_name || \' \' || last_name AS name FROM employee');
+    const employeeChoices = employees.rows.map(emp => ({ name: emp.name, value: emp.id }));
+
+    const { employee_id, manager_id } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'employee_id',
+            message: 'Select the employee to update:',
+            choices: employeeChoices
+        },
+        {
+            type: 'list',
+            name: 'manager_id',
+            message: 'Select the new manager:',
+            choices: [{ name: 'None', value: null }, ...employeeChoices]
+        }
+    ]);
+
+    await client.query('UPDATE employee SET manager_id = $1 WHERE id = $2', [manager_id, employee_id]);
+    console.log('Employee manager updated successfully.');
+};
+
+// View employees by manager
+const viewEmployeesByManager = async () => {
+    const managers = await client.query('SELECT id, first_name || \' \' || last_name AS name FROM employee');
+    const managerChoices = managers.rows.map(mgr => ({ name: mgr.name, value: mgr.id }));
+
+    const { manager_id } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'manager_id',
+            message: 'Select a manager to view their employees:',
+            choices: managerChoices
+        }
+    ]);
+
+    const res = await client.query(
+        `SELECT first_name, last_name FROM employee WHERE manager_id = $1`,
+        [manager_id]
+    );
+    console.table(res.rows);
+};
+
+// View employees by department
+const viewEmployeesByDepartment = async () => {
+    const departments = await client.query('SELECT id, name FROM department');
+    const departmentChoices = departments.rows.map(dep => ({ name: dep.name, value: dep.id }));
+
+    const { department_id } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'department_id',
+            message: 'Select a department to view employees:',
+            choices: departmentChoices
+        }
+    ]);
+
+    const res = await client.query(
+        `SELECT e.first_name, e.last_name, r.title FROM employee e
+         JOIN role r ON e.role_id = r.id
+         WHERE r.department_id = $1`,
+        [department_id]
+    );
+    console.table(res.rows);
+};
+
+// Delete a department, role, or employee
+const deleteRecord = async () => {
+    const { recordType } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'recordType',
+            message: 'What would you like to delete?',
+            choices: ['Department', 'Role', 'Employee']
+        }
+    ]);
+
+    switch (recordType) {
+        case 'Department':
+            const departments = await client.query('SELECT id, name FROM department');
+            const departmentChoices = departments.rows.map(dep => ({ name: dep.name, value: dep.id }));
+
+            const { department_id } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'department_id',
+                    message: 'Select a department to delete:',
+                    choices: departmentChoices
+                }
+            ]);
+
+            await client.query('DELETE FROM department WHERE id = $1', [department_id]);
+            console.log('Department deleted successfully.');
+            break;
+
+        case 'Role':
+            const roles = await client.query('SELECT id, title FROM role');
+            const roleChoices = roles.rows.map(role => ({ name: role.title, value: role.id }));
+
+            const { role_id } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'role_id',
+                    message: 'Select a role to delete:',
+                    choices: roleChoices
+                }
+            ]);
+
+            await client.query('DELETE FROM role WHERE id = $1', [role_id]);
+            console.log('Role deleted successfully.');
+            break;
+
+        case 'Employee':
+            const employees = await client.query('SELECT id, first_name || \' \' || last_name AS name FROM employee');
+            const employeeChoices = employees.rows.map(emp => ({ name: emp.name, value: emp.id }));
+
+            const { employee_id } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employee_id',
+                    message: 'Select an employee to delete:',
+                    choices: employeeChoices
+                }
+            ]);
+
+            await client.query('DELETE FROM employee WHERE id = $1', [employee_id]);
+            console.log('Employee deleted successfully.');
+            break;
+    }
+};
+
+// View total utilized budget by department
+const viewDepartmentBudget = async () => {
+    const departments = await client.query('SELECT id, name FROM department');
+    const departmentChoices = departments.rows.map(dep => ({ name: dep.name, value: dep.id }));
+
+    const { department_id } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'department_id',
+            message: 'Select a department to view the total utilized budget:',
+            choices: departmentChoices
+        }
+    ]);
+
+    const res = await client.query(
+        `SELECT SUM(r.salary) AS total_budget FROM employee e
+         JOIN role r ON e.role_id = r.id
+         WHERE r.department_id = $1`,
+        [department_id]
+    );
+
+    console.log(`Total Utilized Budget: $${res.rows[0].total_budget || 0}`);
 };
 
 // Start the application
