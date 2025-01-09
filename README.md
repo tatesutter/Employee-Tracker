@@ -14,7 +14,7 @@ The Employee Tracker is a command-line application that helps manage a company's
   - [Installation](#installation)
   - [Usage](#usage)
   - [Features](#features)
-    - [Bonus Features (Optional):](#bonus-features-optional)
+    - [Bonus Features:](#bonus-features)
   - [Database Schema](#database-schema)
   - [Preview](#preview)
   - [License](#license)
@@ -81,7 +81,7 @@ The Employee Tracker is a command-line application that helps manage a company's
 - Update employee roles.
 - Automatically displays data in a formatted table for clarity.
 
-### Bonus Features (Optional):
+### Bonus Features:
 - Update employee managers.
 - View employees by manager or department.
 - Delete departments, roles, and employees.
